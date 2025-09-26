@@ -9,6 +9,11 @@ df = pd.read_excel("DETEKTORY DANE.xlsx")
 for i in range(16,30):
     df.drop(f"Unnamed: {i}", axis=1, inplace=True)
 
+for col in df:
+    df.loc[:, col] = df[col].replace("?", 0)
+
+df = df.fillna(0)
+
 cols_to_sort_by = list(df.columns)
 
 for unused_col in ["Imię i nazwisko", "Adres", "Longitude", "Latitude", "Nr detektora", "Start data", "Start godzina", "Koniec data", "Koniec godzina", "Uwagi", "Czas ekspozycji (dni)", "Rok Budowy"]:
@@ -41,14 +46,14 @@ construction_year = "Rok Budowy"
 construction_year_dir = DATA_DIR / construction_year
 construction_year_dir.mkdir(exist_ok=True)
 
-filtered_df = df[df[construction_year] != "?"].fillna(0)
-filtered_df.loc[:, construction_year] = [str(val).removeprefix("? ") for val in filtered_df[construction_year]]
+filtered_df = df.copy()
+filtered_df.loc[:, construction_year] = [str(val).removeprefix("? ") for val in df[construction_year]]
 
 for val in range(1900,2040,20):
     split_df = filtered_df.loc[(filtered_df[construction_year].astype(int) >= val) & (filtered_df[construction_year].astype(int) < val + 20)]
     file = construction_year_dir / f"{val}-{val+20}.csv"
     split_df.to_csv(file.absolute(), index=False)
 
-split_df = split_df.loc[filtered_df[construction_year].astype(int) < 1900]
+split_df = filtered_df.loc[filtered_df[construction_year].astype(int) < 1900]
 file = construction_year_dir / "<1900.csv"
 split_df.to_csv(file.absolute(), index=False)
