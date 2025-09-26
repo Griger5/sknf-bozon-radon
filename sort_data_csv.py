@@ -30,7 +30,7 @@ for col in cols_to_sort_by:
 
     for val in unique_values:
         split_df = df.loc[df[col] == str(val).rstrip()]
-        file = column_dir / (str(val).removesuffix("/blok").rstrip() + ".csv")
+        file = column_dir / (str(val).removesuffix("/blok").rstrip().removesuffix("?").removeprefix("?") + ".csv")
         split_df.to_csv(file.absolute(), index=False)
 
 exposure_time = "Czas ekspozycji (dni)"
