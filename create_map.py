@@ -10,12 +10,16 @@ for i in range(len(coords_df)):
     html=f"""
         <h1>{coords_df.iloc[i]["Nr detektora"]}</h1>
         <h4>Dane:</h4>
-        <p>Szerokość geograficzna: {coords_df.iloc[i]["Latitude"]}</p>
-        <p>Długość geograficzna: {coords_df.iloc[i]["Longitude"]}</p>
-        <p>Data startu: {coords_df.iloc[i]["Start data"]}</p>
-        <p>Data końca: {coords_df.iloc[i]["Koniec data"]}</p>
+        <p>Szerokość geograficzna: {coords_df.iloc[i]["Latitude"]}<br/>
+            Długość geograficzna: {coords_df.iloc[i]["Longitude"]}<br/>
+            Data startu: {coords_df.iloc[i]["Start data"]}<br/>
+            Data końca: {coords_df.iloc[i]["Koniec data"]}<br/>
+            Czas ekspozycji: {coords_df.iloc[i]["Czas ekspozycji (dni)"]} dni<br/>
+            Rok budowy: {coords_df.iloc[i]["Rok Budowy"]}<br/>
+            Uwagi: {coords_df.iloc[i]["Uwagi"]}
+        </p>
         """
-    iframe = folium.IFrame(html=html, width=400, height=200)
+    iframe = folium.IFrame(html=html, width=400, height=300)
     popup = folium.Popup(iframe, max_width=2650)
     folium.Marker(
         location=[coords_df.iloc[i]["Latitude"], coords_df.iloc[i]["Longitude"]],
