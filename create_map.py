@@ -1,6 +1,7 @@
 import folium
 import pandas as pd
 import numpy as np
+import branca.colormap as cmp
 
 m = folium.Map([50, 20], tiles="OpenStreetMap")
 
@@ -12,12 +13,20 @@ colors = ["green", "lightgreen", "orange", "red", "black"]
 
 density_bins = [detector_df["Track density"].quantile(0.2 * i) for i in range(5)]
 
+cmp.StepColormap(
+    colors,
+    index=[0] + density_bins[1:],
+    vmin=0,
+    vmax=detector_df["Track density"].max()/2.5,
+    caption="Wartość gęstości śladu [ślad / mm^2]"
+).add_to(m)
+
 for i in range(len(coords_df)):
     try: 
         density = detector_df.loc[coords_df.iloc[i]["Nr detektora"].replace(" ", ""), "Track density"]
     except:
         denisty = "?"
-
+        
     if density != "?":
         color = colors[int(np.digitize(density, density_bins)) - 1]
     else:
