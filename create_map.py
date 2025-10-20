@@ -46,6 +46,26 @@ for i in range(len(coords_df)):
         color = "blue"
 
     building = str(coords_df.iloc[i]["Typ budynku"]).removesuffix("/blok")
+    materials = []
+    connections = []
+
+    for cat in material_categories:
+        if categories_df.iloc[i][cat]:
+            materials.append(cat)
+
+    for cat in connections_categories:
+        if categories_df.iloc[i][cat]:
+            connections.append(cat)
+
+    age = "?"
+    for val in range(1900,2040,20):
+        if coords_df.iloc[i]["Rok Budowy"] == "?" or pd.isna(coords_df.iloc[i]["Rok Budowy"]):
+            break
+        elif int(coords_df.iloc[i]["Rok Budowy"].removeprefix("? ")) >= val and int(coords_df.iloc[i]["Rok Budowy"].removeprefix("? ")) < val + 20:
+            age = f"{val}-{val+20}"
+            break
+    else:
+        age = "<1900"
 
     html=f"""
         <h1>{coords_df.iloc[i]["Nr detektora"]}</h1>
@@ -55,7 +75,7 @@ for i in range(len(coords_df)):
             Data startu: {coords_df.iloc[i]["Start data"]}<br/>
             Data końca: {coords_df.iloc[i]["Koniec data"]}<br/>
             Czas ekspozycji: {coords_df.iloc[i]["Czas ekspozycji (dni)"]} dni<br/>
-            Rok budowy: {coords_df.iloc[i]["Rok Budowy"]}<br/>
+            Rok budowy: {coords_df.iloc[i]["Rok Budowy"]}<br/>            
             Uwagi: {coords_df.iloc[i]["Uwagi"]}<br/>
         </p>
         """
@@ -65,7 +85,7 @@ for i in range(len(coords_df)):
         location=[coords_df.iloc[i]["Latitude"], coords_df.iloc[i]["Longitude"]],
         popup=popup,
         icon=folium.Icon(color=color),
-        tags=[building]
+        tags=[building, *materials, *connections, age]
     ).add_to(m)
 
 m.save("map.html")
