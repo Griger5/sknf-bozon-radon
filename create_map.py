@@ -75,7 +75,10 @@ for i in range(len(coords_df)):
             Data startu: {coords_df.iloc[i]["Start data"]}<br/>
             Data końca: {coords_df.iloc[i]["Koniec data"]}<br/>
             Czas ekspozycji: {coords_df.iloc[i]["Czas ekspozycji (dni)"]} dni<br/>
-            Rok budowy: {coords_df.iloc[i]["Rok Budowy"]}<br/>            
+            Rok budowy: {coords_df.iloc[i]["Rok Budowy"]}<br/>
+            Typ budynku: {building}<br/>
+            Materiały budowlane: {", ".join(materials)}<br/>
+            Przyłącza: {", ".join(connections)}<br/>
             Uwagi: {coords_df.iloc[i]["Uwagi"]}<br/>
         </p>
         """
