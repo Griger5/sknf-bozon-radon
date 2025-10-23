@@ -52,7 +52,7 @@ def generate_statistics(coords_df, detector_df, categories_df):
     for i in range(len(coords_df)):
         try:
             detector_id = coords_df.iloc[i]["Nr detektora"].replace(" ", "")
-            density_value = detector_df.loc[detector_id, "Track density"]
+            density_value = detector_df.loc[detector_id, "Stężenie radonu"]
             if hasattr(density_value, 'item'):
                 density_value = density_value.item()
             densities.append(float(density_value))
@@ -63,19 +63,19 @@ def generate_statistics(coords_df, detector_df, categories_df):
         # Histogram ogólny
         plt.figure(figsize=(10, 6))
         plt.hist(densities, bins=20, alpha=0.7, color='skyblue', edgecolor='black')
-        plt.title('Rozkład gęstości śladów - wszystkie detektory')
-        plt.xlabel('Gęstość śladów [ślad/mm²]')
+        plt.title('Rozkład stężenia radonu - wszystkie detektory')
+        plt.xlabel('Stęzenie radonu [Bq/m³]')
         plt.ylabel('Liczba detektorów')
         plt.grid(True, alpha=0.3)
         hist_all = plot_to_base64()
         
         stats_html += f"""
         <div class="stat-section">
-            <h3>Statystyki ogólne</h3>
+            <h3>Statystyki ogólne (stężenia radonu)</h3>
             <p><b>Liczba detektorów z danymi:</b> {len(densities)}</p>
-            <p><b>Średnia gęstość:</b> {np.mean(densities):.2f} ± {np.std(densities):.2f} śladów/mm²</p>
-            <p><b>Mediana:</b> {np.median(densities):.2f} śladów/mm²</p>
-            <p><b>Zakres:</b> {np.min(densities):.2f} - {np.max(densities):.2f} śladów/mm²</p>
+            <p><b>Średnie stężenie:</b> {np.mean(densities):.2f} ± {np.std(densities):.2f} Bq/m³</p>
+            <p><b>Mediana:</b> {np.median(densities):.2f} Bq/m³</p>
+            <p><b>Zakres:</b> {np.min(densities):.2f} - {np.max(densities):.2f} Bq/m³</p>
             <p><b>Odchylenie standardowe:</b> {np.std(densities):.2f}</p>
             <p><b>Współczynnik zmienności:</b> {(np.std(densities)/np.mean(densities)*100):.1f}%</p>
             <img src="data:image/png;base64,{hist_all}" style="width:100%; max-width:600px;">
@@ -91,7 +91,7 @@ def generate_statistics(coords_df, detector_df, categories_df):
                 building = str(coords_df.iloc[i]["Typ budynku"]).removesuffix("/blok")
                 if building == building_type:
                     detector_id = coords_df.iloc[i]["Nr detektora"].replace(" ", "")
-                    density_value = detector_df.loc[detector_id, "Track density"]
+                    density_value = detector_df.loc[detector_id, "Stężenie radonu"]
                     if hasattr(density_value, 'item'):
                         density_value = density_value.item()
                     building_densities.append(float(density_value))
@@ -116,8 +116,8 @@ def generate_statistics(coords_df, detector_df, categories_df):
         box_labels = [f"{k}\n(n={v['count']})" for k, v in building_stats.items()]
         
         plt.boxplot(box_data, tick_labels=box_labels)
-        plt.title('Porównanie gęstości śladów wg typu budynku')
-        plt.ylabel('Gęstość śladów [ślad/mm²]')
+        plt.title('Porównanie stężenia radonu wg typu budynku')
+        plt.ylabel('Stężenie radonu [Bq/m³]')
         plt.grid(True, alpha=0.3)
         boxplot_buildings = plot_to_base64()
         
@@ -179,7 +179,7 @@ def generate_statistics(coords_df, detector_df, categories_df):
                 
                 if calculated_age == age_cat:
                     detector_id = coords_df.iloc[i]["Nr detektora"].replace(" ", "")
-                    density_value = detector_df.loc[detector_id, "Track density"]
+                    density_value = detector_df.loc[detector_id, "Stężenie radonu"]
                     if hasattr(density_value, 'item'):
                         density_value = density_value.item()
                     age_densities.append(float(density_value))
@@ -205,8 +205,8 @@ def generate_statistics(coords_df, detector_df, categories_df):
         bars = plt.bar(range(len(age_means)), age_means, yerr=age_stds, 
                       capsize=5, alpha=0.7, color='lightcoral')
         plt.xticks(range(len(age_means)), age_labels, rotation=45)
-        plt.title('Średnia gęstość śladów wg wieku budynku')
-        plt.ylabel('Gęstość śladów [ślad/mm²]')
+        plt.title('Średnie stężenie radonu wg wieku budynku')
+        plt.ylabel('Stężenie radonu [Bq/m³]')
         
         
         for bar, mean, count in zip(bars, age_means, [stats['count'] for stats in age_stats.values()]):
@@ -233,7 +233,230 @@ def generate_statistics(coords_df, detector_df, categories_df):
             try:
                 if categories_df.iloc[i][material]:
                     detector_id = coords_df.iloc[i]["Nr detektora"].replace(" ", "")
-                    density_value = detector_df.loc[detector_id, "Track density"]
+                    density_value = detector_df.loc[detector_id, "Stężenie radonu"]
+                    if hasattr(density_value, 'item'):
+                        density_value = density_value.item()
+                    material_densities.append(float(density_value))
+            except:
+                continue
+        
+        if material_densities:
+            material_stats[material] = {
+                'mean': np.mean(material_densities),
+                'std': np.std(material_densities),
+                'count': len(material_densities),
+                'median': np.median(material_densities)
+            }
+    
+    if material_stats:
+        stats_html += f"""
+        <div class="stat-section">
+            <h3>Statystyki wg materiałów budowlanych</h3>
+            <div class="grid-container">
+        """
+        
+        for material, stats in material_stats.items():
+            stats_html += f"""
+                <div class="stat-card">
+                    <b>{material.capitalize()}</b><br>
+                    Średnia: {stats['mean']:.2f} ± {stats['std']:.2f}<br>
+                    Mediana: {stats['median']:.2f}<br>
+                    n={stats['count']}
+                </div>
+            """
+        
+        stats_html += "</div></div>"
+
+        ####################################################################################################
+    # ############################################################################################
+    
+    # Podstawowe statystyki
+    densities = []
+    for i in range(len(coords_df)):
+        try:
+            detector_id = coords_df.iloc[i]["Nr detektora"].replace(" ", "")
+            density_value = detector_df.loc[detector_id, "a"]
+            if hasattr(density_value, 'item'):
+                density_value = density_value.item()
+            densities.append(float(density_value))
+        except:
+            continue
+    
+    if densities:
+        # Histogram ogólny
+        plt.figure(figsize=(10, 6))
+        plt.hist(densities, bins=20, alpha=0.7, color='skyblue', edgecolor='black')
+        plt.title('Rozkład średniorocznego stężenia radonu - wszystkie detektory')
+        plt.xlabel('Średnioroczne stężenie radonu [Bq/m³]')
+        plt.ylabel('Liczba detektorów')
+        plt.grid(True, alpha=0.3)
+        hist_all = plot_to_base64()
+        
+        stats_html += f"""
+        <div class="stat-section">
+            <h3>Statystyki ogólne (średniorocznego stężenia radonu)</h3>
+            <p><b>Liczba detektorów z danymi:</b> {len(densities)}</p>
+            <p><b>Średnie stężenie:</b> {np.mean(densities):.2f} ± {np.std(densities):.2f} Bq/m³</p>
+            <p><b>Mediana:</b> {np.median(densities):.2f} Bq/m³</p>
+            <p><b>Zakres:</b> {np.min(densities):.2f} - {np.max(densities):.2f} Bq/m³</p>
+            <p><b>Odchylenie standardowe:</b> {np.std(densities):.2f}</p>
+            <p><b>Współczynnik zmienności:</b> {(np.std(densities)/np.mean(densities)*100):.1f}%</p>
+            <img src="data:image/png;base64,{hist_all}" style="width:100%; max-width:600px;">
+        </div>
+        """
+    
+    # Statystyki per typ budynku
+    building_stats = {}
+    for building_type in ["kamienica", "blok", "wolnostojący", "szeregowy"]:
+        building_densities = []
+        for i in range(len(coords_df)):
+            try:
+                building = str(coords_df.iloc[i]["Typ budynku"]).removesuffix("/blok")
+                if building == building_type:
+                    detector_id = coords_df.iloc[i]["Nr detektora"].replace(" ", "")
+                    density_value = detector_df.loc[detector_id, "a"]
+                    if hasattr(density_value, 'item'):
+                        density_value = density_value.item()
+                    building_densities.append(float(density_value))
+            except:
+                continue
+        
+        if building_densities:
+            building_stats[building_type] = {
+                'mean': np.mean(building_densities),
+                'std': np.std(building_densities),
+                'count': len(building_densities),
+                'median': np.median(building_densities),
+                'min': np.min(building_densities),
+                'max': np.max(building_densities),
+                'data': building_densities
+            }
+    
+    if building_stats:
+        # Wykres pudełkowy dla ttypow budynkow
+        plt.figure(figsize=(12, 6))
+        box_data = [data['data'] for data in building_stats.values()]
+        box_labels = [f"{k}\n(n={v['count']})" for k, v in building_stats.items()]
+        
+        plt.boxplot(box_data, tick_labels=box_labels)
+        plt.title('Porównanie średniorocznego stężenia radonu wg typu budynku')
+        plt.ylabel('a [Bq/m³]')
+        plt.grid(True, alpha=0.3)
+        boxplot_buildings = plot_to_base64()
+        
+        stats_html += f"""
+        <div class="stat-section">
+            <h3>Statystyki wg typu budynku</h3>
+            <div class="grid-container">
+        """
+        
+        for building_type, stats in building_stats.items():
+            stats_html += f"""
+                <div class="stat-card">
+                    <h4>{building_type.capitalize()}</h4>
+                    <p><b>Średnia:</b> {stats['mean']:.2f} ± {stats['std']:.2f}</p>
+                    <p><b>Mediana:</b> {stats['median']:.2f}</p>
+                    <p><b>Liczba:</b> {stats['count']}</p>
+                    <p><b>Zakres:</b> {stats['min']:.2f}-{stats['max']:.2f}</p>
+                </div>
+            """
+        
+        stats_html += f"""
+            </div>
+            <img src="data:image/png;base64,{boxplot_buildings}" style="width:100%; max-width:700px; margin-top:20px;">
+        </div>
+        """
+    
+    # Statystyki per wiek budynku
+    age_stats = {}
+    age_categories_list = ["<1900", "1900-1920", "1920-1940", "1940-1960", "1960-1980", "1980-2000", "2000-2020", "2020-2040"]
+    
+    for age_cat in age_categories_list:
+        age_densities = []
+        for i in range(len(coords_df)):
+            try:
+                #okreslenie katergroii wieku budynku 
+                rok_budowy = coords_df.iloc[i]["Rok Budowy"]
+                age = "?"
+                
+                if pd.isna(rok_budowy) or rok_budowy == "?":
+                    continue
+                else:
+                    rok_str = str(rok_budowy)
+                    if rok_str.startswith("? "):
+                        rok_str = rok_str[2:]
+                    
+                    try:
+                        rok_int = int(rok_str)
+                        if rok_int < 1900:
+                            calculated_age = "<1900"
+                        else:
+                            for val in range(1900, 2040, 20):
+                                if val <= rok_int < val + 20:
+                                    calculated_age = f"{val}-{val+20}"
+                                    break
+                            else:
+                                calculated_age = "2020-2040"
+                    except:
+                        continue
+                
+                if calculated_age == age_cat:
+                    detector_id = coords_df.iloc[i]["Nr detektora"].replace(" ", "")
+                    density_value = detector_df.loc[detector_id, "a"]
+                    if hasattr(density_value, 'item'):
+                        density_value = density_value.item()
+                    age_densities.append(float(density_value))
+            except:
+                continue
+        
+        if age_densities:
+            age_stats[age_cat] = {
+                'mean': np.mean(age_densities),
+                'std': np.std(age_densities),
+                'count': len(age_densities),
+                'median': np.median(age_densities),
+                'data': age_densities
+            }
+    
+    if age_stats:
+        # Wykres slupkowy dla wieku
+        plt.figure(figsize=(12, 6))
+        age_labels = list(age_stats.keys())
+        age_means = [stats['mean'] for stats in age_stats.values()]
+        age_stds = [stats['std'] for stats in age_stats.values()]
+        
+        bars = plt.bar(range(len(age_means)), age_means, yerr=age_stds, 
+                      capsize=5, alpha=0.7, color='lightcoral')
+        plt.xticks(range(len(age_means)), age_labels, rotation=45)
+        plt.title('Średnioroczne stężenie radonu wg wieku budynku')
+        plt.ylabel('Średnioroczne stężenie radonu [Bq/m³]')
+        
+        
+        for bar, mean, count in zip(bars, age_means, [stats['count'] for stats in age_stats.values()]):
+            plt.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.1, 
+                    f'{mean:.1f}\nn={count}', ha='center', va='bottom', fontsize=9)
+        
+        plt.grid(True, alpha=0.3)
+        age_chart = plot_to_base64()
+        
+        stats_html += f"""
+        <div class="stat-section">
+            <h3>Statystyki wg wieku budynku</h3>
+            <img src="data:image/png;base64,{age_chart}" style="width:100%; max-width:800px;">
+        </div>
+        """
+    
+    # Statystyki per materiały budowlane
+    material_stats = {}
+    material_categories_list = ["cegła", "beton", "pustak", "drewno", "kamień", "styropian", "wylewka", "wielka płyta"]
+    
+    for material in material_categories_list:
+        material_densities = []
+        for i in range(len(coords_df)):
+            try:
+                if categories_df.iloc[i][material]:
+                    detector_id = coords_df.iloc[i]["Nr detektora"].replace(" ", "")
+                    density_value = detector_df.loc[detector_id, "a"]
                     if hasattr(density_value, 'item'):
                         density_value = density_value.item()
                     material_densities.append(float(density_value))
@@ -287,7 +510,8 @@ main_excel = pd.ExcelFile("DETEKTORY DANE.xlsx")
 
 coords_df = pd.read_excel(main_excel, "Sheet1")
 coords_df = coords_df.dropna(subset=["Latitude", "Longitude"])
-detector_df = pd.read_excel("wyniki.xlsx").set_index("Detector ID")
+detector_df = pd.read_excel("wyniki.xlsx").set_index("Nr detektora")
+# detector_df = pd.read_excel("wyniki.xlsx").set_index("Detector ID")
 categories_df = pd.read_excel(main_excel, "Info_Bool").fillna(0)
 
 age_categories = ["<1900", "1900-1920", "1920-1940", "1940-1960", "1960-1980", "1980-2000", "2000-2020", "2020-2040"]
@@ -299,14 +523,17 @@ categories = [*age_categories, *building_categories, *material_categories, *conn
 
 colors = ["green", "lightgreen", "orange", "red", "black"]
 
-density_bins = [detector_df["Track density"].quantile(0.2 * i) for i in range(5)]
+# density_bins = [detector_df["Track density"].quantile(0.2 * i) for i in range(5)]
+density_bins = [detector_df["Stężenie radonu"].quantile(0.2 * i) for i in range(5)]
 
 cmp.StepColormap(
     colors,
     index=[0] + density_bins[1:],
     vmin=0,
-    vmax=detector_df["Track density"].max()/2.5,
-    caption="Wartość gęstości śladu [ślad / mm^2]"
+    # vmax=detector_df["Track density"].max()/2.5,
+    vmax=detector_df["Stężenie radonu"].max()/2.5,
+    # caption="Wartość gęstości śladu [ślad / mm^2]"
+    caption="Wartość stężenia radonu [Bq/m³]"
 ).add_to(m)
 
 stats_html = generate_statistics(coords_df, detector_df, categories_df)
@@ -348,15 +575,41 @@ m.get_root().html.add_child(Element(button_html))
 TagFilterButton(categories).add_to(m)
 
 for i in range(len(coords_df)):
+    # try: 
+    #     density_value = detector_df.loc[coords_df.iloc[i]["Nr detektora"].replace(" ", ""), "Track density"]
+    #     # to leci na float w przyadku gydby to bylo series, wazna zmiana imo bo mi sie wypierdalalo xdd
+    #     if isinstance(density_value, pd.Series):
+    #         density_value = density_value.iloc[0]
+    #     density = float(density_value)
+    #     color = colors[int(np.digitize(density, density_bins)) - 1]
+    # except Exception as e:
+    #     density = "?"
+    #     color = "blue"
+
+    print(list(detector_df.index))
+    # print(detector_df.loc[coords_df.iloc[i]["Nr detektora"].strip(), "Stężenie radonu"])
+
     try: 
-        density_value = detector_df.loc[coords_df.iloc[i]["Nr detektora"].replace(" ", ""), "Track density"]
-        # to leci na float w przyadku gydby to bylo series, wazna zmiana imo bo mi sie wypierdalalo xdd
-        if hasattr(density_value, 'item'):
-            density_value = density_value.item()
-        density = float(density_value)
-        color = colors[int(np.digitize(density, density_bins)) - 1]
+        if (coords_df.iloc[i]["Nr detektora"].strip() == "HA4116"):
+            continue
+        density = detector_df.loc[coords_df.iloc[i]["Nr detektora"].strip(), "Stężenie radonu"]
     except:
         density = "?"
+
+    try: 
+        if (coords_df.iloc[i]["Nr detektora"].strip() == "HA4116"):
+            yearly = "?"
+            continue
+        yearly = detector_df.loc[coords_df.iloc[i]["Nr detektora"].strip(), "a"]
+    except:
+        yearly = "?"
+
+    if isinstance(density, pd.Series):
+        density = density.iloc[0]
+
+    if density != "?":
+        color = colors[int(np.digitize(density, density_bins)) - 1]
+    else:
         color = "blue"
 
     building = str(coords_df.iloc[i]["Typ budynku"]).removesuffix("/blok")
@@ -401,7 +654,8 @@ for i in range(len(coords_df)):
         <h1>{coords_df.iloc[i]["Nr detektora"]}</h1>
         <h4>Dane:</h4>
         <p>
-            Track density: {density}<br/>
+            Stężenie radonu: {density} [Bq/m3]<br/>
+            Średnioroczne stężenie: {yearly} [Bq/m3]<br/> 
             Data startu: {coords_df.iloc[i]["Start data"]}<br/>
             Data końca: {coords_df.iloc[i]["Koniec data"]}<br/>
             Czas ekspozycji: {coords_df.iloc[i]["Czas ekspozycji (dni)"]} dni<br/>
