@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import base64
 from io import BytesIO
 from folium import Element
+import webbrowser
 
 # Funkcja do tworzenia wykresów base64
 def plot_to_base64():
@@ -506,7 +507,7 @@ def generate_statistics(coords_df, detector_df, categories_df):
 
 m = folium.Map([50, 20], tiles="OpenStreetMap")
 
-main_excel = pd.ExcelFile("DETEKTORY DANE.xlsx")
+main_excel = pd.ExcelFile("DETEKTORY_DANE_18_10_2025.xlsx")
 
 coords_df = pd.read_excel(main_excel, "Sheet1")
 coords_df = coords_df.dropna(subset=["Latitude", "Longitude"])
@@ -586,7 +587,7 @@ for i in range(len(coords_df)):
     #     density = "?"
     #     color = "blue"
 
-    print(list(detector_df.index))
+    # print(list(detector_df.index))
     # print(detector_df.loc[coords_df.iloc[i]["Nr detektora"].strip(), "Stężenie radonu"])
 
     try: 
@@ -676,3 +677,5 @@ for i in range(len(coords_df)):
     ).add_to(m)
 
 m.save("map.html")
+
+webbrowser.open(r"map.html")
